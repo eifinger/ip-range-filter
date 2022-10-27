@@ -14,9 +14,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: Setup Gradle
+      - name: Setup Gradle and execute 'test' task
         uses: gradle/gradle-build-action@v2
-      - name: Run build with Gradle Wrapper
-        run: ./gradlew build
-      - name: Run test with Gradle Wrapper
-        run: ./gradlew test
+        with:
+          arguments: test
