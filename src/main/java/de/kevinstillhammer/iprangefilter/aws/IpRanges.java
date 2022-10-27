@@ -13,4 +13,14 @@ public class IpRanges {
     private String createDate;
     @JsonProperty("prefixes")
     private List<Prefix> prefixes = Collections.emptyList();
+
+    public List<String> prefixesWhereRegionStartsWith(String pattern) {
+        return prefixes
+                .stream()
+                .filter(prefix -> prefix
+                        .getRegion()
+                        .startsWith(pattern))
+                .map(Prefix::getIpPrefix)
+                .toList();
+    }
 }
