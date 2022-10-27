@@ -9,5 +9,4 @@ public class IpRangeFilterApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(IpRangeFilterApplication.class, args);
 	}
-
 }
