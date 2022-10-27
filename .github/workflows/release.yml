@@ -1,0 +1,36 @@
+name: "Create and push Docker imag to ghcr.io"
+
+on:
+  push:
+    branches: ['main']
+
+env:
+  REGISTRY: "ghcr.io"
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Log in to the Container registry
+      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/setup-java@v3
+      with:
+        distribution: temurin
+        java-version: 17
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    - name: Run build with Gradle Wrapper
+      run: ./gradlew jib --image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
