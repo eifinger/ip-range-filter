@@ -80,6 +80,12 @@ class IpRangeFilterApplicationTests {
     }
 
     @Test
+    void ipRangesShouldBeSeparatedByNewLine() {
+        assertThat(this.restTemplate.getForObject("http://localhost:" + port + "/ip-ranges", String.class))
+                .startsWith("3.2.34.0/26" + System.lineSeparator() + "3.5.140.0/22");
+    }
+
+    @Test
     void resultShouldBeTextPlain() {
         assertThat(this.restTemplate
                 .getForEntity("http://localhost:" + port + "/ip-ranges", String.class)
@@ -90,21 +96,16 @@ class IpRangeFilterApplicationTests {
     @ParameterizedTest
     @MethodSource("knownIpForRegion")
     void regionFilterShouldReturnKnownPrefixes(Region region, String knownIp) {
-        assertThat(this.restTemplate
-                .getForObject("http://localhost:" + port + "/ip-ranges?region=" + region.name(), String.class))
-                .contains(knownIp);
+        assertThat(
+                this.restTemplate.getForObject("http://localhost:" + port + "/ip-ranges?region=" + region.name(), String.class)).contains(
+                knownIp);
     }
 
     private static Stream<Arguments> knownIpForRegion() {
-        return Stream.of(
-                Arguments.of(Region.AF, "3.2.34.0/26"),
-                Arguments.of(Region.CA, "15.177.100.0/24"),
-                Arguments.of(Region.AP, "13.236.0.0/14"),
-                Arguments.of(Region.EU, "15.230.158.0/23"),
-                Arguments.of(Region.CN, "52.82.169.0/28"),
-                Arguments.of(Region.US, "52.93.178.138/32"),
-                Arguments.of(Region.SA, "52.93.122.203/32")
-        );
+        return Stream.of(Arguments.of(Region.AF, "3.2.34.0/26"), Arguments.of(Region.CA, "15.177.100.0/24"),
+                Arguments.of(Region.AP, "13.236.0.0/14"), Arguments.of(Region.EU, "15.230.158.0/23"),
+                Arguments.of(Region.CN, "52.82.169.0/28"), Arguments.of(Region.US, "52.93.178.138/32"),
+                Arguments.of(Region.SA, "52.93.122.203/32"));
     }
 
     public static class MockServerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

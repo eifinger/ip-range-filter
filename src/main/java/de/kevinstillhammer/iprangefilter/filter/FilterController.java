@@ -20,11 +20,11 @@ public class FilterController {
     @GetMapping("/ip-ranges")
     public @ResponseBody Flux<String> ipRanges(@RequestParam(required = false) Region region) {
         if (Objects.isNull(region)) {
-            return awsClient.getIpPrefixes();
+            return awsClient.getIpPrefixes().map(prefix -> prefix.concat(System.lineSeparator()));
         }
         if (region.equals(Region.ALL)) {
-            return awsClient.getIpPrefixes();
+            return awsClient.getIpPrefixes().map(prefix -> prefix.concat(System.lineSeparator()));
         }
-        return awsClient.getIpPrefixesForFuzzyRegion(region.name());
+        return awsClient.getIpPrefixesForFuzzyRegion(region.name()).map(prefix -> prefix.concat(System.lineSeparator()));
     }
 }
