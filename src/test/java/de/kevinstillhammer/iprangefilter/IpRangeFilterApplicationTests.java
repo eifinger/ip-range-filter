@@ -1,12 +1,17 @@
 package de.kevinstillhammer.iprangefilter;
 
+import de.kevinstillhammer.iprangefilter.filter.Region;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +85,26 @@ class IpRangeFilterApplicationTests {
                 .getForEntity("http://localhost:" + port + "/ip-ranges", String.class)
                 .getHeaders()
                 .getContentType()).hasToString("text/plain;charset=UTF-8");
+    }
+
+    @ParameterizedTest
+    @MethodSource("knownIpForRegion")
+    void regionFilterShouldReturnKnownPrefixes(Region region, String knownIp) {
+        assertThat(this.restTemplate
+                .getForObject("http://localhost:" + port + "/ip-ranges?region=" + region.name(), String.class))
+                .contains(knownIp);
+    }
+
+    private static Stream<Arguments> knownIpForRegion() {
+        return Stream.of(
+                Arguments.of(Region.AF, "3.2.34.0/26"),
+                Arguments.of(Region.CA, "15.177.100.0/24"),
+                Arguments.of(Region.AP, "13.236.0.0/14"),
+                Arguments.of(Region.EU, "15.230.158.0/23"),
+                Arguments.of(Region.CN, "52.82.169.0/28"),
+                Arguments.of(Region.US, "52.93.178.138/32"),
+                Arguments.of(Region.SA, "52.93.122.203/32")
+        );
     }
 
     public static class MockServerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
