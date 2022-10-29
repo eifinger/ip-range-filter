@@ -3,6 +3,7 @@ package de.kevinstillhammer.iprangefilter;
 import de.kevinstillhammer.iprangefilter.filter.Region;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
@@ -22,6 +23,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.util.StreamUtils;
@@ -76,29 +78,42 @@ class IpRangeFilterApplicationTests {
 
     @Test
     void defaultShouldContainKnownIPRange() {
-        assertThat(this.restTemplate.getForObject("http://localhost:" + port + "/ip-ranges", String.class)).contains("3.2.34.0/26");
+        var url = String.format("http://localhost:%s/ip-ranges", port);
+        assertThat(this.restTemplate.getForObject(url, String.class)).contains("3.2.34.0/26");
     }
 
     @Test
     void ipRangesShouldBeSeparatedByNewLine() {
-        assertThat(this.restTemplate.getForObject("http://localhost:" + port + "/ip-ranges", String.class))
-                .startsWith("3.2.34.0/26" + System.lineSeparator() + "3.5.140.0/22");
+        var url = String.format("http://localhost:%s/ip-ranges", port);
+        assertThat(this.restTemplate.getForObject(url, String.class)).startsWith("3.2.34.0/26" + System.lineSeparator() + "3.5.140.0/22");
     }
 
     @Test
     void resultShouldBeTextPlain() {
+        var url = String.format("http://localhost:%s/ip-ranges", port);
         assertThat(this.restTemplate
-                .getForEntity("http://localhost:" + port + "/ip-ranges", String.class)
+                .getForEntity(url, String.class)
                 .getHeaders()
                 .getContentType()).hasToString("text/plain;charset=UTF-8");
+    }
+
+    @Test
+    void invalidFilterShouldRespondWithValidFilter() {
+        var url = String.format("http://localhost:%s/ip-ranges?region=%s", port, "invalid");
+        var response = this.restTemplate.getForEntity(url, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("Valid regions are");
+
+        assertThat(Arrays.stream(Region.values())).allSatisfy(region -> response
+                .getBody()
+                .contains(region.name()));
     }
 
     @ParameterizedTest
     @MethodSource("knownIpForRegion")
     void regionFilterShouldReturnKnownPrefixes(Region region, String knownIp) {
-        assertThat(
-                this.restTemplate.getForObject("http://localhost:" + port + "/ip-ranges?region=" + region.name(), String.class)).contains(
-                knownIp);
+        var url = String.format("http://localhost:%s/ip-ranges?region=%s", port, region.name());
+        assertThat(this.restTemplate.getForObject(url, String.class)).contains(knownIp);
     }
 
     private static Stream<Arguments> knownIpForRegion() {
