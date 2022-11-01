@@ -106,9 +106,8 @@ class IpRangeFilterApplicationTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains("Valid regions are");
 
-        assertThat(Arrays.stream(RegionStartingWith.values())).allSatisfy(region -> response
-                .getBody()
-                .contains(region.name()));
+        Arrays.stream(RegionStartingWith.values())
+                .forEach(region -> assertThat(response.getBody()).contains(region.name()));
     }
 
     @ParameterizedTest
