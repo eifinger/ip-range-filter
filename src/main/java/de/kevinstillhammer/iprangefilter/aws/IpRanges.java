@@ -13,4 +13,6 @@ public class IpRanges {
     private String createDate;
     @JsonProperty("prefixes")
     private List<Prefix> prefixes = Collections.emptyList();
+    @JsonProperty("ipv6_prefixes")
+    private List<Prefix> ipv6Prefixes = Collections.emptyList();
 }

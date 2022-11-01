@@ -83,6 +83,12 @@ class IpRangeFilterApplicationTests {
     }
 
     @Test
+    void defaultShouldReturnAllIpranges() {
+        var url = String.format("http://localhost:%s/ip-ranges", port);
+        assertThat(this.restTemplate.getForObject(url, String.class).split(System.lineSeparator())).hasSize(8820);
+    }
+
+    @Test
     void ipRangesShouldBeSeparatedByNewLine() {
         var url = String.format("http://localhost:%s/ip-ranges", port);
         assertThat(this.restTemplate.getForObject(url, String.class)).startsWith("3.2.34.0/26" + System.lineSeparator() + "3.5.140.0/22");
@@ -119,13 +125,33 @@ class IpRangeFilterApplicationTests {
 
     private static Stream<Arguments> knownIpForRegion() {
         return Stream.of(
-                Arguments.of(RegionStartingWith.AF, "3.2.34.0/26"),
-                Arguments.of(RegionStartingWith.CA, "15.177.100.0/24"),
-                Arguments.of(RegionStartingWith.AP, "13.236.0.0/14"),
-                Arguments.of(RegionStartingWith.EU, "15.230.158.0/23"),
-                Arguments.of(RegionStartingWith.CN, "52.82.169.0/28"),
-                Arguments.of(RegionStartingWith.US, "52.93.178.138/32"),
-                Arguments.of(RegionStartingWith.SA, "52.93.122.203/32")
+                Arguments.of(RegionStartingWith.AF, "3.2.34.0/26", 142),
+                Arguments.of(RegionStartingWith.CA, "15.177.100.0/24", 204),
+                Arguments.of(RegionStartingWith.AP, "13.236.0.0/14", 2082),
+                Arguments.of(RegionStartingWith.EU, "15.230.158.0/23", 1936),
+                Arguments.of(RegionStartingWith.CN, "52.82.169.0/28", 298),
+                Arguments.of(RegionStartingWith.US, "52.93.178.138/32", 3172),
+                Arguments.of(RegionStartingWith.SA, "52.93.122.203/32", 284)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("amountOfIpsForRegion")
+    void regionFilterShouldReturnCorrectAmountOfIps(RegionStartingWith region, int amountOfIps) {
+        var url = String.format("http://localhost:%s/ip-ranges?region=%s", port, region.name());
+        var result = this.restTemplate.getForObject(url, String.class);
+        assertThat(result.split(System.lineSeparator())).hasSize(amountOfIps);
+    }
+
+    private static Stream<Arguments> amountOfIpsForRegion() {
+        return Stream.of(
+                Arguments.of(RegionStartingWith.AF, 142),
+                Arguments.of(RegionStartingWith.CA, 204),
+                Arguments.of(RegionStartingWith.AP, 2082),
+                Arguments.of(RegionStartingWith.EU, 1936),
+                Arguments.of(RegionStartingWith.CN, 298),
+                Arguments.of(RegionStartingWith.US, 3172),
+                Arguments.of(RegionStartingWith.SA, 284)
         );
     }
 

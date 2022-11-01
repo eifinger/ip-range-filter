@@ -3,7 +3,7 @@ package de.kevinstillhammer.iprangefilter.aws;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class AwsClient {
@@ -18,10 +18,10 @@ public class AwsClient {
                 .build();
     }
 
-    public Flux<IpRanges> getIpRanges() {
+    public Mono<IpRanges> getIpRanges() {
         return this.webClient
                 .get()
                 .retrieve()
-                .bodyToFlux(IpRanges.class);
+                .bodyToMono(IpRanges.class);
     }
 }
