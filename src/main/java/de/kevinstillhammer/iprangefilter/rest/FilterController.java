@@ -1,6 +1,9 @@
-package de.kevinstillhammer.iprangefilter.filter;
+package de.kevinstillhammer.iprangefilter.rest;
 
 import de.kevinstillhammer.iprangefilter.aws.AwsClient;
+import de.kevinstillhammer.iprangefilter.model.IpRange;
+import de.kevinstillhammer.iprangefilter.model.RegionStartingWith;
+import de.kevinstillhammer.iprangefilter.model.mapper.IpRangeMapper;
 import io.micrometer.core.annotation.Timed;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -14,25 +17,27 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
+import static de.kevinstillhammer.iprangefilter.model.IpRangeFilter.byRegionStartingWithIgnoreCase;
+
 @RestController
 public class FilterController {
 
     final AwsClient awsClient;
+    private final IpRangeMapper ipRangeMapper;
 
-    public FilterController(AwsClient awsClient) {
+    public FilterController(AwsClient awsClient, IpRangeMapper ipRangeMapper) {
         this.awsClient = awsClient;
+        this.ipRangeMapper = ipRangeMapper;
     }
 
     @GetMapping("/ip-ranges")
     @Timed(value = "ip-ranges-timer")
-    public @ResponseBody Flux<String> ipRanges(@RequestParam(required = false, defaultValue = "ALL") Region region) {
-        if (region.equals(Region.ALL)) {
-            return awsClient
-                    .getIpPrefixes()
-                    .map(prefix -> prefix.concat(System.lineSeparator()));
-        }
+    public @ResponseBody Flux<String> ipRanges(@RequestParam(required = false, defaultValue = "ALL") RegionStartingWith region) {
         return awsClient
-                .getIpPrefixesForRegionStartingWith(region.name())
+                .getIpRanges()
+                .map(ipRangeMapper::ipRangesToIpRange)
+                .flatMap(ipRanges -> Flux.fromIterable(byRegionStartingWithIgnoreCase(ipRanges, region)))
+                .map(IpRange::getPrefix)
                 .map(prefix -> prefix.concat(System.lineSeparator()));
     }
 
@@ -41,7 +46,7 @@ public class FilterController {
     @ResponseBody
     public String handleTypeMismatchException(TypeMismatchException e) {
         var validRegions = Arrays
-                .stream(Region.values())
+                .stream(RegionStartingWith.values())
                 .map(Enum::name)
                 .collect(Collectors.joining(","));
         return String.format("Invalid region '%s'. Valid regions are: %s", e.getValue(), validRegions);

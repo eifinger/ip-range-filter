@@ -8,6 +8,7 @@ plugins {
 	id 'org.springframework.boot' version '2.7.5'
 	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 	id 'com.google.cloud.tools.jib' version '3.3.0'
+	id "io.freefair.lombok" version "6.5.1"
 	id 'java'
 }
 
@@ -27,6 +28,7 @@ repositories {
 
 ext {
 	set('testcontainersVersion', '1.17.4')
+	set('mapstructVersion', '1.5.3.Final')
 }
 
 dependencies {
@@ -35,8 +37,9 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	implementation 'org.springdoc:springdoc-openapi-webflux-ui:1.6.12'
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-	annotationProcessor 'org.projectlombok:lombok'
-	compileOnly 'org.projectlombok:lombok'
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
