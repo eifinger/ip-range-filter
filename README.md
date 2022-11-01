@@ -20,13 +20,12 @@ You can also use the Swagger-UI under http://localhost:8080http://swagger-ui.htm
 
 Due to the fact that this application is very small and has trivial logic no separate unit tests have been written.
 
-All tests are e2e/integration tests which test against a [MockServer](https://www.mock-server.com/) using [Testcontainers](https://www.testcontainers.org/).
+All tests are e2e/integration tests which test against a [MockWebServer](https://github.com/square/okhttp/tree/master/mockwebserver).
 
 This provides the benefit that the whole application with serializing, dependencies,... is tested.
 
 When the application grows in complexity this approach should be revisited.
 
-In order to run the tests Docker has to be installed.
 ````shell
 ./gradlew test
 ````
