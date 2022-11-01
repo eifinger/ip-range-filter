@@ -36,7 +36,8 @@ public class FilterController {
         return awsClient
                 .getIpRanges()
                 .map(ipRangeMapper::ipRangesToIpRange)
-                .flatMap(ipRanges -> Flux.fromIterable(byRegionStartingWithIgnoreCase(ipRanges, region)))
+                .map(ipRanges -> byRegionStartingWithIgnoreCase(ipRanges, region))
+                .flatMapIterable(ipRanges -> ipRanges)
                 .map(IpRange::getPrefix)
                 .map(prefix -> prefix.concat(System.lineSeparator()));
     }
