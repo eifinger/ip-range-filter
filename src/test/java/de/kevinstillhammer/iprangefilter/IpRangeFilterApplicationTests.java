@@ -1,6 +1,6 @@
 package de.kevinstillhammer.iprangefilter;
 
-import de.kevinstillhammer.iprangefilter.model.RegionStartingWith;
+import de.kevinstillhammer.iprangefilter.model.Region;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -106,13 +106,13 @@ class IpRangeFilterApplicationTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains("Valid regions are");
 
-        Arrays.stream(RegionStartingWith.values())
+        Arrays.stream(Region.values())
                 .forEach(region -> assertThat(response.getBody()).contains(region.name()));
     }
 
     @ParameterizedTest
     @MethodSource("knownIpForRegion")
-    void regionFilterShouldReturnKnownPrefixes(RegionStartingWith region, String knownIp) {
+    void regionFilterShouldReturnKnownPrefixes(Region region, String knownIp) {
         var url = String.format("http://localhost:%s/ip-ranges?region=%s", port, region.name());
         var result = this.restTemplate.getForObject(url, String.class);
         assertThat(result).contains(knownIp);
@@ -120,19 +120,19 @@ class IpRangeFilterApplicationTests {
 
     private static Stream<Arguments> knownIpForRegion() {
         return Stream.of(
-                Arguments.of(RegionStartingWith.AF, "3.2.34.0/26", 142),
-                Arguments.of(RegionStartingWith.CA, "15.177.100.0/24", 204),
-                Arguments.of(RegionStartingWith.AP, "13.236.0.0/14", 2082),
-                Arguments.of(RegionStartingWith.EU, "15.230.158.0/23", 1936),
-                Arguments.of(RegionStartingWith.CN, "52.82.169.0/28", 298),
-                Arguments.of(RegionStartingWith.US, "52.93.178.138/32", 3172),
-                Arguments.of(RegionStartingWith.SA, "52.93.122.203/32", 284)
+                Arguments.of(Region.AF, "3.2.34.0/26", 142),
+                Arguments.of(Region.CA, "15.177.100.0/24", 204),
+                Arguments.of(Region.AP, "13.236.0.0/14", 2082),
+                Arguments.of(Region.EU, "15.230.158.0/23", 1936),
+                Arguments.of(Region.CN, "52.82.169.0/28", 298),
+                Arguments.of(Region.US, "52.93.178.138/32", 3172),
+                Arguments.of(Region.SA, "52.93.122.203/32", 284)
         );
     }
 
     @ParameterizedTest
     @MethodSource("amountOfIpsForRegion")
-    void regionFilterShouldReturnCorrectAmountOfIps(RegionStartingWith region, int amountOfIps) {
+    void regionFilterShouldReturnCorrectAmountOfIps(Region region, int amountOfIps) {
         var url = String.format("http://localhost:%s/ip-ranges?region=%s", port, region.name());
         var result = this.restTemplate.getForObject(url, String.class);
         assertThat(result.split(System.lineSeparator())).hasSize(amountOfIps);
@@ -140,13 +140,13 @@ class IpRangeFilterApplicationTests {
 
     private static Stream<Arguments> amountOfIpsForRegion() {
         return Stream.of(
-                Arguments.of(RegionStartingWith.AF, 142),
-                Arguments.of(RegionStartingWith.CA, 204),
-                Arguments.of(RegionStartingWith.AP, 2082),
-                Arguments.of(RegionStartingWith.EU, 1936),
-                Arguments.of(RegionStartingWith.CN, 298),
-                Arguments.of(RegionStartingWith.US, 3172),
-                Arguments.of(RegionStartingWith.SA, 284)
+                Arguments.of(Region.AF, 142),
+                Arguments.of(Region.CA, 204),
+                Arguments.of(Region.AP, 2082),
+                Arguments.of(Region.EU, 1936),
+                Arguments.of(Region.CN, 298),
+                Arguments.of(Region.US, 3172),
+                Arguments.of(Region.SA, 284)
         );
     }
 
