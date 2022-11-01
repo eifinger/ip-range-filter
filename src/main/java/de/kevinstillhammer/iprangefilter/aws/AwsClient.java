@@ -18,26 +18,10 @@ public class AwsClient {
                 .build();
     }
 
-    private Flux<IpRanges> getIpRanges() {
+    public Flux<IpRanges> getIpRanges() {
         return this.webClient
                 .get()
                 .retrieve()
                 .bodyToFlux(IpRanges.class);
-    }
-
-    public Flux<String> getIpPrefixesForRegionStartingWith(String fuzzyRegion) {
-        var pattern = fuzzyRegion.toLowerCase();
-        return this
-                .getIpRanges()
-                .flatMap(ipRanges -> Flux.fromIterable(ipRanges.prefixesWhereRegionStartsWith(pattern)));
-    }
-
-    public Flux<String> getIpPrefixes() {
-        return this
-                .getIpRanges()
-                .map(IpRanges::getPrefixes)
-                .flatMap(prefixes -> Flux.fromStream(prefixes
-                        .stream()
-                        .map(Prefix::getIpPrefix)));
     }
 }

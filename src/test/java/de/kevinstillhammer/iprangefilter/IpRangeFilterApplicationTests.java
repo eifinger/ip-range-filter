@@ -1,6 +1,6 @@
 package de.kevinstillhammer.iprangefilter;
 
-import de.kevinstillhammer.iprangefilter.filter.Region;
+import de.kevinstillhammer.iprangefilter.model.RegionStartingWith;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -104,23 +104,29 @@ class IpRangeFilterApplicationTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains("Valid regions are");
 
-        assertThat(Arrays.stream(Region.values())).allSatisfy(region -> response
+        assertThat(Arrays.stream(RegionStartingWith.values())).allSatisfy(region -> response
                 .getBody()
                 .contains(region.name()));
     }
 
     @ParameterizedTest
     @MethodSource("knownIpForRegion")
-    void regionFilterShouldReturnKnownPrefixes(Region region, String knownIp) {
+    void regionFilterShouldReturnKnownPrefixes(RegionStartingWith region, String knownIp) {
         var url = String.format("http://localhost:%s/ip-ranges?region=%s", port, region.name());
-        assertThat(this.restTemplate.getForObject(url, String.class)).contains(knownIp);
+        var result = this.restTemplate.getForObject(url, String.class);
+        assertThat(result).contains(knownIp);
     }
 
     private static Stream<Arguments> knownIpForRegion() {
-        return Stream.of(Arguments.of(Region.AF, "3.2.34.0/26"), Arguments.of(Region.CA, "15.177.100.0/24"),
-                Arguments.of(Region.AP, "13.236.0.0/14"), Arguments.of(Region.EU, "15.230.158.0/23"),
-                Arguments.of(Region.CN, "52.82.169.0/28"), Arguments.of(Region.US, "52.93.178.138/32"),
-                Arguments.of(Region.SA, "52.93.122.203/32"));
+        return Stream.of(
+                Arguments.of(RegionStartingWith.AF, "3.2.34.0/26"),
+                Arguments.of(RegionStartingWith.CA, "15.177.100.0/24"),
+                Arguments.of(RegionStartingWith.AP, "13.236.0.0/14"),
+                Arguments.of(RegionStartingWith.EU, "15.230.158.0/23"),
+                Arguments.of(RegionStartingWith.CN, "52.82.169.0/28"),
+                Arguments.of(RegionStartingWith.US, "52.93.178.138/32"),
+                Arguments.of(RegionStartingWith.SA, "52.93.122.203/32")
+        );
     }
 
     public static class MockServerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
