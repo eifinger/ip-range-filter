@@ -26,34 +26,21 @@ repositories {
 	mavenCentral()
 }
 
-ext {
-	set('testcontainersVersion', '1.17.4')
-	set('mapstructVersion', '1.5.3.Final')
-}
-
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	implementation 'org.springdoc:springdoc-openapi-webflux-ui:1.6.12'
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
-	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	implementation "org.mapstruct:mapstruct:1.5.3.Final"
+	annotationProcessor "org.mapstruct:mapstruct-processor:1.5.3.Final"
 
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
-	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.junit.jupiter:junit-jupiter-params'
-	testImplementation 'org.testcontainers:mockserver'
-	testImplementation 'org.mock-server:mockserver-client-java:5.14.0'
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
-	}
+	testImplementation 'com.squareup.okhttp3:mockwebserver:4.10.0'
 }
 
 tasks.named('test') {

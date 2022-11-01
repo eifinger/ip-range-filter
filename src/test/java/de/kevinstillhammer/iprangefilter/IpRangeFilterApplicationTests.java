@@ -5,6 +5,11 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,8 +18,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,23 +27,17 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.util.StreamUtils;
-import org.testcontainers.containers.MockServerContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = {IpRangeFilterApplicationTests.MockServerInitializer.class},
                       classes = {IpRangeFilterApplication.class})
-@Testcontainers
 class IpRangeFilterApplicationTests {
 
     @LocalServerPort
@@ -49,31 +46,30 @@ class IpRangeFilterApplicationTests {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    MockServerClient mockServerClient;
-
-    @Container
-    public static final MockServerContainer mockServer = new MockServerContainer(DockerImageName
-            .parse("mockserver/mockserver")
-            .withTag("mockserver-" + MockServerClient.class
-                    .getPackage()
-                    .getImplementationVersion()));
+    private static MockWebServer mockWebServer = new MockWebServer();
 
     @Value("classpath:ip_ranges_26_10_2022.json")
     Resource ipRangeFile;
 
     @BeforeAll
-    public void setUp() throws IOException {
-        mockServerClient = new MockServerClient(mockServer.getHost(), mockServer.getServerPort());
-        mockServerClient
-                .when(request().withPath("/ip-ranges.json"))
-                .respond(response()
-                        .withBody(StreamUtils.copyToString(ipRangeFile.getInputStream(), Charset.defaultCharset()))
-                        .withContentType(MediaType.APPLICATION_JSON));
+    public void setUp() {
+        var dispatcher = new Dispatcher() {
+            @SneakyThrows
+            @NotNull
+            @Override
+            public MockResponse dispatch(@NotNull RecordedRequest recordedRequest) {
+                return new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .setBody(StreamUtils.copyToString(ipRangeFile.getInputStream(), Charset.defaultCharset()));
+            }
+        };
+        mockWebServer.setDispatcher(dispatcher);
     }
 
     @AfterAll
-    public void tearDown() {
-        mockServerClient.close();
+    public void tearDown() throws IOException {
+        mockWebServer.shutdown();
     }
 
     @Test
@@ -158,9 +154,9 @@ class IpRangeFilterApplicationTests {
     public static class MockServerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(@NotNull ConfigurableApplicationContext configurableApplicationContext) {
-            mockServer.start();
+            mockWebServer = new MockWebServer();
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(configurableApplicationContext,
-                    "awsUrl=" + mockServer.getEndpoint() + "/ip-ranges.json");
+                    "awsUrl=" + mockWebServer.url("/") + "/ip-ranges.json");
         }
     }
 }
