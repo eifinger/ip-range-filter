@@ -1,6 +1,6 @@
 package de.kevinstillhammer.iprangefilter.model;
 
-public enum Region {
+public enum RegionStartsWith {
     EU,
     US,
     AP,
