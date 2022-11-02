@@ -2,8 +2,8 @@ package de.kevinstillhammer.iprangefilter.rest;
 
 import de.kevinstillhammer.iprangefilter.aws.AwsClient;
 import de.kevinstillhammer.iprangefilter.model.IpRange;
-import de.kevinstillhammer.iprangefilter.model.Region;
-import de.kevinstillhammer.iprangefilter.model.filter.IpRangeFilter;
+import de.kevinstillhammer.iprangefilter.model.RegionStartsWith;
+import de.kevinstillhammer.iprangefilter.model.IpRangeFilter;
 import de.kevinstillhammer.iprangefilter.model.mapper.IpRangeMapper;
 import io.micrometer.core.annotation.Timed;
 import java.util.Arrays;
@@ -31,12 +31,12 @@ public class FilterController {
 
     @GetMapping("/ip-ranges")
     @Timed(value = "ip-ranges-timer")
-    public @ResponseBody Flux<String> ipRanges(@RequestParam(required = false, defaultValue = "ALL") Region region) {
+    public @ResponseBody Flux<String> ipRanges(@RequestParam(required = false, defaultValue = "ALL", name = "region") RegionStartsWith regionStartsWith) {
         return awsClient
                 .getIpRanges()
                 .map(ipRangeMapper::ipRangesToIpRange)
-                .map(IpRangeFilter.forRegion(region)::apply)
                 .flatMapIterable(ipRanges -> ipRanges)
+                .filter(IpRangeFilter.forRegionStartsWith(regionStartsWith)::apply)
                 .map(IpRange::getPrefix)
                 .map(prefix -> prefix.concat(System.lineSeparator()));
     }
@@ -46,7 +46,7 @@ public class FilterController {
     @ResponseBody
     public String handleTypeMismatchException(TypeMismatchException e) {
         var validRegions = Arrays
-                .stream(Region.values())
+                .stream(RegionStartsWith.values())
                 .map(Enum::name)
                 .collect(Collectors.joining(","));
         return String.format("Invalid region '%s'. Valid regions are: %s", e.getValue(), validRegions);
